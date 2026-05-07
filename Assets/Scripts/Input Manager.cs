@@ -14,6 +14,7 @@ public class InputManager : MonoBehaviour
     public Vector2 MoveInput { get; private set; }
     public Vector2 LookInput { get; private set; }
     public event Action OnInteract;
+    public event Action OnPause;
 
     void Awake()
     {
@@ -55,5 +56,6 @@ public class InputManager : MonoBehaviour
         inputActions.Player.Move.canceled += ctx => MoveInput = Vector2.zero;
 
         inputActions.Player.Interact.started += ctx => OnInteract?.Invoke();
+        inputActions.Player.Pause.started += ctx => OnPause?.Invoke();
     }
 }

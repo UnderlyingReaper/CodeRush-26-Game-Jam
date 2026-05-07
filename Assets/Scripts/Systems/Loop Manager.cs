@@ -43,6 +43,12 @@ public class LoopManager : MonoBehaviour
     /// </summary>
     public static event UnityAction<LoopStage> OnLoopRestarted;
 
+    // Add this event at the top with your other events
+    /// <summary>
+    /// Fired when the current loop's puzzle is solved and the bus should spawn.
+    /// </summary>
+    public static event UnityAction<LoopStage> OnLoopPuzzleComplete;
+
     /// <summary>
     /// Fired when the REAL bus arrives at the end of Loop3.
     /// This is the escape trigger — handled externally by your bus/scene logic.
@@ -85,6 +91,17 @@ public class LoopManager : MonoBehaviour
 
         Debug.Log($"[LoopManager] Bus departed — now in {currentLoop}");
         OnLoopChanged?.Invoke(currentLoop);
+    }
+
+    /// <summary>
+    /// Called when the player has solved the current loop's puzzle.
+    /// Fires OnLoopPuzzleComplete so the bus system knows to spawn.
+    /// Loop does NOT advance here — it advances when the player boards.
+    /// </summary>
+    public void CompleteCurrentLoopPuzzle()
+    {
+        Debug.Log($"[LoopManager] Puzzle complete for {currentLoop} — spawning bus.");
+        OnLoopPuzzleComplete?.Invoke(currentLoop);
     }
 
     /// <summary>
