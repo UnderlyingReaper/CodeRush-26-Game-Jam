@@ -1,0 +1,170 @@
+using System.Collections;
+using UnityEngine;
+using TMPro;
+
+/// <summary>
+/// Combined Controller for the LAYOVER monolith.
+/// Handles physical movement (when not looked at) and text updates per loop.
+/// </summary>
+public class MonolithController : MonoBehaviour
+{
+    [System.Serializable]
+    public struct LoopTransform
+    {
+        public Vector3 position;
+        public Vector3 rotation; // Euler angles
+    }
+
+    [System.Serializable]
+    public struct MonolithLoopText
+    {
+        [TextArea(3, 8)] public string loop1Text;
+        [TextArea(3, 8)] public string loop2Text;
+        [TextArea(3, 8)] public string loop3Text;
+        [TextArea(3, 8)] public string busArrivalText;
+    }
+
+    [Header("UI References")]
+    [SerializeField] private TextMeshProUGUI nameLabel;
+    [SerializeField] private TextMeshProUGUI bodyLabel;
+    [SerializeField] private string monolithName;
+
+    [Header("Content")]
+    [SerializeField] private MonolithLoopText loopTexts;
+
+    [Header("Monolith Transform Per Loop")]
+    [SerializeField] private LoopTransform loop1Transform;
+    [SerializeField] private LoopTransform loop2Transform;
+    [SerializeField] private LoopTransform loop3Transform;
+
+    [Header("Visibility Settings")]
+    [SerializeField] private Camera playerCamera;
+    [Tooltip("World-space radius of the monolith used for frustum visibility check.")]
+    [SerializeField][Range(0.5f, 20f)] private float visibilityCheckRadius = 3f;
+
+    // Internal state
+    private LoopTransform pendingTransform;
+    private bool transformPending = false;
+
+    private void Awake()
+    {
+        if (playerCamera == null)
+            playerCamera = Camera.main;
+
+        if (nameLabel != null)
+            nameLabel.text = monolithName;
+    }
+
+    private void OnEnable()
+    {
+        LoopManager.OnLoopChanged += HandleLoopChanged;
+        LoopManager.OnLoopRestarted += HandleLoopRestarted;
+        LoopManager.OnRealBusArrived += HandleRealBusArrived;
+    }
+
+    private void OnDisable()
+    {
+        LoopManager.OnLoopChanged -= HandleLoopChanged;
+        LoopManager.OnLoopRestarted -= HandleLoopRestarted;
+        LoopManager.OnRealBusArrived -= HandleRealBusArrived;
+    }
+
+    private void Start()
+    {
+        // Sync to current state on start
+        if (LoopManager.Instance != null)
+        {
+            UpdateText(LoopManager.Instance.CurrentLoop);
+            // Initial position snap
+            ApplyInstantTransform(LoopManager.Instance.CurrentLoop);
+        }
+    }
+
+    private void Update()
+    {
+        // If a movement is queued, only move when the player looks away
+        if (transformPending && !IsMonolithVisible())
+            ApplyPendingTransform();
+    }
+
+    // ── Event Handlers ─────────────────────────────────────────────────────
+
+    private void HandleLoopChanged(LoopStage newLoop)
+    {
+        UpdateText(newLoop);
+
+        LoopTransform target = GetTransformForLoop(newLoop);
+        QueueTransform(target);
+    }
+
+    private void HandleLoopRestarted(LoopStage sameLoop)
+    {
+        // Ensure text is correct if a restart triggers specific logic
+        UpdateText(sameLoop);
+    }
+
+    private void HandleRealBusArrived()
+    {
+        if (bodyLabel != null)
+            bodyLabel.text = loopTexts.busArrivalText;
+    }
+
+    // ── Logic Helpers ──────────────────────────────────────────────────────
+
+    private void UpdateText(LoopStage loop)
+    {
+        if (bodyLabel == null) return;
+
+        bodyLabel.text = loop switch
+        {
+            LoopStage.Loop1 => loopTexts.loop1Text,
+            LoopStage.Loop2 => loopTexts.loop2Text,
+            LoopStage.Loop3 => loopTexts.loop3Text,
+            _ => loopTexts.loop1Text
+        };
+    }
+
+    private LoopTransform GetTransformForLoop(LoopStage loop)
+    {
+        return loop switch
+        {
+            LoopStage.Loop1 => loop1Transform,
+            LoopStage.Loop2 => loop2Transform,
+            LoopStage.Loop3 => loop3Transform,
+            _ => loop1Transform
+        };
+    }
+
+    private void QueueTransform(LoopTransform target)
+    {
+        pendingTransform = target;
+        transformPending = true;
+
+        // Apply immediately if player isn't watching right now
+        if (!IsMonolithVisible())
+            ApplyPendingTransform();
+    }
+
+    private void ApplyPendingTransform()
+    {
+        transform.position = pendingTransform.position;
+        transform.rotation = Quaternion.Euler(pendingTransform.rotation);
+        transformPending = false;
+    }
+
+    private void ApplyInstantTransform(LoopStage loop)
+    {
+        LoopTransform target = GetTransformForLoop(loop);
+        transform.position = target.position;
+        transform.rotation = Quaternion.Euler(target.rotation);
+        transformPending = false;
+    }
+
+    private bool IsMonolithVisible()
+    {
+        if (playerCamera == null) return false;
+        Bounds bounds = new Bounds(transform.position, Vector3.one * visibilityCheckRadius * 2f);
+        Plane[] planes = GeometryUtility.CalculateFrustumPlanes(playerCamera);
+        return GeometryUtility.TestPlanesAABB(planes, bounds);
+    }
+}
