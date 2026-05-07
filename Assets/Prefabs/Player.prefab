@@ -164,6 +164,7 @@ GameObject:
   - component: {fileID: 4682718584797224307}
   - component: {fileID: 3725914875672538741}
   - component: {fileID: 8905530995037009355}
+  - component: {fileID: 6356325014700734386}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -241,6 +242,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b31fb063f9cdc0140b76f741bfb6f3d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BoundaryTeleporter
-  boundaryRadius: 20
+  boundaryRadius: 65
   stopCenter: {fileID: 0}
   characterController: {fileID: 4682718584797224307}
+--- !u!114 &6356325014700734386
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8919482699744145952}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b87530cd4e1d944ab50160b705f12f4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteraction
+  interactRange: 2.5
+  interactableLayer:
+    serializedVersion: 2
+    m_Bits: 64
