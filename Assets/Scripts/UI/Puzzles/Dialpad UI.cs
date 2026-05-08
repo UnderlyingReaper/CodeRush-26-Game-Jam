@@ -37,6 +37,12 @@ public class DialpadUI : MonoBehaviour
         Cursor.visible = true;
     }
 
+    public void OpenWithDigits(int digits, Action<string> onComplete)
+    {
+        maxDigits = digits;
+        Open(onComplete);
+    }
+
     public void Close()
     {
         dialpadPanel.SetActive(false);
@@ -58,6 +64,15 @@ public class DialpadUI : MonoBehaviour
             {
                 Submit();
             }
+        }
+    }
+
+    public void Backspace()
+    {
+        if (currentInput.Length > 0)
+        {
+            currentInput = currentInput.Substring(0, currentInput.Length - 1);
+            UpdateDisplay();
         }
     }
 

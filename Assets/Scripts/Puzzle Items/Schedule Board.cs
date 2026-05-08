@@ -5,6 +5,8 @@ using TMPro;
 
 public class ScheduleBoard : MonoBehaviour
 {
+    public static ScheduleBoard Instance { get; private set; }
+
     [Header("UI References")]
     public TextMeshProUGUI boardTextDisplay;
 
@@ -15,6 +17,10 @@ public class ScheduleBoard : MonoBehaviour
     [Header("Loop 1 Puzzle Data")]
     public int loop1TargetRoute = 7;
     public string loop1Date = "November 14";
+
+    [Header("Loop 2 Puzzle Data")]
+    public int loop2TargetRoute = 14;
+    public string loop2Destination = "Ashford";
 
     [Header("Display Settings")]
     [Tooltip("How many camouflage routes to show alongside the anomaly.")]
@@ -40,6 +46,17 @@ public class ScheduleBoard : MonoBehaviour
     };
 
     private Coroutine _cycleCoroutine;
+
+
+    private void Awake()
+    {
+        if (Instance != null)
+        {
+            Destroy(this);
+            return;
+        }
+        Instance = this;
+    }
 
     private void OnEnable()
     {
@@ -67,7 +84,6 @@ public class ScheduleBoard : MonoBehaviour
 
     private void GenerateBoardText()
     {
-        // Pick camouflage routes — no duplicates per cycle
         List<string> pool = new List<string>(normalRoutes);
         List<string> displayed = new List<string>();
 
@@ -79,14 +95,20 @@ public class ScheduleBoard : MonoBehaviour
             pool.RemoveAt(idx);
         }
 
-        // Always inject Route 7 anomaly in Loop 1 at a random position
-        // It is guaranteed to appear every cycle — player just has to
-        // watch long enough to catch it among the shuffling routes
-        if (LoopManager.Instance != null && LoopManager.Instance.IsLoop1)
+        if (LoopManager.Instance != null)
         {
-            string anomaly = $"Route {loop1TargetRoute} : 02:41 AM - To [{loop1Date}]";
-            int insertAt = Random.Range(0, displayed.Count + 1);
-            displayed.Insert(insertAt, anomaly);
+            string anomaly = "";
+
+            if (LoopManager.Instance.IsLoop1)
+                anomaly = $"Route {loop1TargetRoute} : 02:41 AM - To [{loop1Date}]";
+            else if (LoopManager.Instance.IsLoop2)
+                anomaly = $"Route {loop2TargetRoute} : 03:00 AM - To [{loop2Destination}]";
+
+            if (!string.IsNullOrEmpty(anomaly))
+            {
+                int insertAt = Random.Range(0, displayed.Count + 1);
+                displayed.Insert(insertAt, anomaly);
+            }
         }
 
         string newText = string.Empty;
