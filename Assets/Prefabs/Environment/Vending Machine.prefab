@@ -741,7 +741,7 @@ MonoBehaviour:
   - {fileID: 8627184426643577369}
   confirmButton: {fileID: 5646137388451943839}
   cancelButton: {fileID: 1370894652449096791}
-  correctSlot: C4
+  correctSlot: A4
 --- !u!1 &3078853457668424778
 GameObject:
   m_ObjectHideFlags: 0
@@ -989,7 +989,7 @@ MonoBehaviour:
   m_PreserveMeshAssetOnDestroy: 0
   assetGuid: 
   m_Mesh: {fileID: 0}
-  m_VersionIndex: 94
+  m_VersionIndex: 106
   m_IsSelectable: 1
   m_SelectedFaces: 
   m_SelectedEdges: []
@@ -1225,7 +1225,9 @@ GameObject:
   - component: {fileID: 1068780530252585290}
   - component: {fileID: 2371145228874459335}
   - component: {fileID: 8290621700274075360}
-  m_Layer: 0
+  - component: {fileID: 7102119267495404738}
+  - component: {fileID: 2312190845005526552}
+  m_Layer: 6
   m_Name: Loop 1 Prop
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1455,7 +1457,7 @@ MonoBehaviour:
   m_PreserveMeshAssetOnDestroy: 0
   assetGuid: 
   m_Mesh: {fileID: 0}
-  m_VersionIndex: 415
+  m_VersionIndex: 427
   m_IsSelectable: 1
   m_SelectedFaces: 
   m_SelectedEdges: []
@@ -1541,6 +1543,39 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3646646164750177744}
   m_Mesh: {fileID: 0}
+--- !u!114 &7102119267495404738
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3646646164750177744}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74524fefded6a614f837fe1648fa3975, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TicketPickup
+--- !u!65 &2312190845005526552
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3646646164750177744}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.40000015, y: 0.02, z: 0.07000002}
+  m_Center: {x: -0.0000009536745, y: 0, z: -0.00000047683716}
 --- !u!1 &3701937515369893734
 GameObject:
   m_ObjectHideFlags: 0
@@ -1788,7 +1823,7 @@ MonoBehaviour:
   m_PreserveMeshAssetOnDestroy: 0
   assetGuid: 
   m_Mesh: {fileID: 0}
-  m_VersionIndex: 666
+  m_VersionIndex: 678
   m_IsSelectable: 1
   m_SelectedFaces: 
   m_SelectedEdges: []
@@ -2121,7 +2156,7 @@ MonoBehaviour:
   m_PreserveMeshAssetOnDestroy: 0
   assetGuid: 
   m_Mesh: {fileID: 0}
-  m_VersionIndex: 299
+  m_VersionIndex: 311
   m_IsSelectable: 1
   m_SelectedFaces: 
   m_SelectedEdges: []
@@ -2667,7 +2702,7 @@ MonoBehaviour:
   m_PreserveMeshAssetOnDestroy: 0
   assetGuid: 
   m_Mesh: {fileID: 0}
-  m_VersionIndex: 207
+  m_VersionIndex: 219
   m_IsSelectable: 1
   m_SelectedFaces: 
   m_SelectedEdges: []

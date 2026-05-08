@@ -11,7 +11,7 @@ public class VendingMachine : MonoBehaviour, IInteractable
 
     private bool _hasDispensed = false;
 
-    public bool CanInteract => !_hasDispensed && PlayerInventory.Instance.HasCoin;
+    public bool CanInteract => !_hasDispensed;
 
     public string GetPromptText() => PlayerInventory.Instance.HasCoin
         ? "Use Vending Machine"
@@ -44,6 +44,11 @@ public class VendingMachine : MonoBehaviour, IInteractable
 
     public void Interact()
     {
+        if (!PlayerInventory.Instance.HasCoin)
+        {
+            return;
+        }
+
         VendingMachineUI.Instance.Open();
     }
 
