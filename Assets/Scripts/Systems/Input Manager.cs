@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 public class InputManager : MonoBehaviour
 {
     public static InputManager Instance { get; private set; }
-    [SerializeField] private CinemachineInputAxisController cameraInput;
+    [SerializeField] public CinemachineInputAxisController cameraInput;
 
     private InputSystem_Actions inputActions;
 

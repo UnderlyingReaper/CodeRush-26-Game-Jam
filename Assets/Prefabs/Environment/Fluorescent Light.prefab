@@ -621,7 +621,7 @@ MonoBehaviour:
   litMaterial: {fileID: 2100000, guid: 54c4eed0276e0734e9273254e3f4444f, type: 2}
   offMaterial: {fileID: 2100000, guid: 671f588eb55574c499fe741177c3701c, type: 2}
   cycleDuration: 2
-  flickerThreshold: 0.82
+  flickerThreshold: 0.8
   flickerSpeed: 5
   humSource: {fileID: 4804604637706789164}
   baseVolume: 0.05

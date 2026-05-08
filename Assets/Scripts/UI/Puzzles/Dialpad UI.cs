@@ -25,13 +25,12 @@ public class DialpadUI : MonoBehaviour
 
     public void Open(Action<string> onComplete)
     {
+        maxDigits = 3; // reset to default
         onCompleteCallback = onComplete;
         currentInput = "";
         UpdateDisplay();
 
         dialpadPanel.SetActive(true);
-
-        // Disable movement and show cursor
         InputManager.Instance.DisableGameplay();
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -40,7 +39,14 @@ public class DialpadUI : MonoBehaviour
     public void OpenWithDigits(int digits, Action<string> onComplete)
     {
         maxDigits = digits;
-        Open(onComplete);
+        onCompleteCallback = onComplete;
+        currentInput = "";
+        UpdateDisplay();
+
+        dialpadPanel.SetActive(true);
+        InputManager.Instance.DisableGameplay();
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 
     public void Close()
@@ -78,14 +84,12 @@ public class DialpadUI : MonoBehaviour
 
     private void UpdateDisplay()
     {
-        // Displays "_ _ _" or "2 _ _" etc.
         string display = "";
         for (int i = 0; i < maxDigits; i++)
         {
-            if (i < currentInput.Length) display += currentInput[i] + " ";
-            else display += "_ ";
+            display += (i < currentInput.Length) ? currentInput[i].ToString() : "_";
         }
-        inputDisplayText.text = display.Trim();
+        inputDisplayText.text = display;
     }
 
     public void Submit()

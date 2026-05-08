@@ -294,6 +294,7 @@ public class Payphone : MonoBehaviour, IInteractable
         yield return new WaitForSeconds(shuttleConfirmedClip ? shuttleConfirmedClip.length : 3f);
 
         LoopManager.Instance.TriggerRealBus();
+        PlayerInventory.Instance.HasTicket = true;
     }
 
     private void PlayClip(AudioClip clip, float volume)

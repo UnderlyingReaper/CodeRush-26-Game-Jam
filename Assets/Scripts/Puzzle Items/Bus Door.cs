@@ -30,6 +30,7 @@ public class BusDoor : MonoBehaviour, IInteractable
 
     private IEnumerator BoardingSequence()
     {
+        BusController.Instance.cam1.gameObject.SetActive(true);
         yield return new WaitForSeconds(BusController.Instance.doorAnimDuration);
 
         InputManager.Instance.DisableGameplay();
@@ -38,14 +39,21 @@ public class BusDoor : MonoBehaviour, IInteractable
         ScreenFade.Instance.FadeOut(() => fadeDone = true);
         yield return new WaitUntil(() => fadeDone);
 
+        bool isEscape = LoopManager.Instance.IsLoop3;
+
         LoopManager.Instance.AdvanceLoop();
 
         yield return new WaitForSeconds(boardingDelay);
 
-        // Teleport player to bus exit point
-        TeleportPlayerToExit();
+        if (isEscape)
+        {
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Credits");
+            yield break;
+        }
 
+        TeleportPlayerToExit();
         InputManager.Instance.EnableGameplay();
+        BusController.Instance.cam1.gameObject.SetActive(false);
         yield return new WaitForSeconds(0.5f);
 
         BusController.Instance.Depart();
@@ -64,8 +72,7 @@ public class BusDoor : MonoBehaviour, IInteractable
         cc.enabled = true;
 
         // Force CinemachinePanTilt Y axis to 180 (facing away from bus)
-        CinemachineCamera vcam = Camera.main.GetComponent<CinemachineBrain>()
-            .ActiveVirtualCamera as CinemachineCamera;
+        CinemachineCamera vcam = InputManager.Instance.cameraInput.GetComponent<CinemachineCamera>();
 
         if (vcam != null)
         {

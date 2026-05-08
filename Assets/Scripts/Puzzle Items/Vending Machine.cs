@@ -8,6 +8,11 @@ public class VendingMachine : MonoBehaviour, IInteractable
     public GameObject receiptProp;
     public GameObject ticketProp; // The bus ticket prop — enable this in Loop 2
 
+    [Header("Audio")]
+    public AudioSource audioSource;
+    public AudioClip dispenseSound;
+    public AudioClip errorSound; // Optional: for wrong inputs
+
     private bool _hasDispensed = false;
 
     public bool CanInteract => !_hasDispensed;
@@ -57,6 +62,7 @@ public class VendingMachine : MonoBehaviour, IInteractable
 
         if (ticketProp != null) ticketProp.SetActive(true);
 
+        PlaySound(dispenseSound);
         HUDNotification.Instance.Show("A ticket appears in the machine slot.");
     }
 
@@ -75,6 +81,7 @@ public class VendingMachine : MonoBehaviour, IInteractable
 
         if (receiptProp != null) receiptProp.SetActive(true);
 
+        PlaySound(dispenseSound);
         HUDNotification.Instance.Show("Something dispensed.");
         LoopManager.Instance.CompleteCurrentLoopPuzzle();
     }
@@ -82,8 +89,21 @@ public class VendingMachine : MonoBehaviour, IInteractable
     public void OnWrongInput()
     {
         PlayerInventory.Instance.HasCoin = false;
+
+        PlaySound(errorSound);
         HUDNotification.Instance.Show("Nothing dispensed.");
         LoopManager.Instance.RestartCurrentLoop();
+    }
+
+    // ─── Audio Helper ─────────────────────────────────────────────
+
+    private void PlaySound(AudioClip clip)
+    {
+        if (audioSource != null && clip != null)
+        {
+            // PlayOneShot allows multiple sounds to overlap without cutting each other off
+            audioSource.PlayOneShot(clip);
+        }
     }
 
     // ─── Loop state handling ──────────────────────────────────────
