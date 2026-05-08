@@ -15,22 +15,9 @@ public class MonolithController : MonoBehaviour
         public Vector3 rotation; // Euler angles
     }
 
-    [System.Serializable]
-    public struct MonolithLoopText
-    {
-        [TextArea(3, 8)] public string loop1Text;
-        [TextArea(3, 8)] public string loop2Text;
-        [TextArea(3, 8)] public string loop3Text;
-        [TextArea(3, 8)] public string busArrivalText;
-    }
-
     [Header("UI References")]
-    [SerializeField] private TextMeshProUGUI nameLabel;
-    [SerializeField] private TextMeshProUGUI bodyLabel;
-    [SerializeField] private string monolithName;
-
-    [Header("Content")]
-    [SerializeField] private MonolithLoopText loopTexts;
+    [SerializeField] private GameObject normalText;
+    [SerializeField] private GameObject anomalyText;
 
     [Header("Monolith Transform Per Loop")]
     [SerializeField] private LoopTransform loop1Transform;
@@ -50,9 +37,6 @@ public class MonolithController : MonoBehaviour
     {
         if (playerCamera == null)
             playerCamera = Camera.main;
-
-        if (nameLabel != null)
-            nameLabel.text = monolithName;
     }
 
     private void OnEnable()
@@ -105,23 +89,29 @@ public class MonolithController : MonoBehaviour
 
     private void HandleRealBusArrived()
     {
-        if (bodyLabel != null)
-            bodyLabel.text = loopTexts.busArrivalText;
+        anomalyText.SetActive(false);
+        normalText.SetActive(true);
     }
 
     // ── Logic Helpers ──────────────────────────────────────────────────────
 
     private void UpdateText(LoopStage loop)
     {
-        if (bodyLabel == null) return;
-
-        bodyLabel.text = loop switch
+        switch(loop)
         {
-            LoopStage.Loop1 => loopTexts.loop1Text,
-            LoopStage.Loop2 => loopTexts.loop2Text,
-            LoopStage.Loop3 => loopTexts.loop3Text,
-            _ => loopTexts.loop1Text
-        };
+            case LoopStage.Cutscene:
+            case LoopStage.Loop1:
+            case LoopStage.Loop2:
+            default:
+                normalText.SetActive(true);
+                anomalyText.SetActive(false);
+                break;
+
+            case LoopStage.Loop3:
+                anomalyText.SetActive(true);
+                normalText.SetActive(false);
+                break;
+        }
     }
 
     private LoopTransform GetTransformForLoop(LoopStage loop)
