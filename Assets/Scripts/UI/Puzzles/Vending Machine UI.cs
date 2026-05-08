@@ -56,12 +56,6 @@ public class VendingMachineUI : MonoBehaviour
 
     public void Open()
     {
-        if (!PlayerInventory.Instance.HasCoin)
-        {
-            HUDNotification.Instance.Show("You need a coin.");
-            return;
-        }
-
         _currentSelection = string.Empty;
         UpdateDisplay();
         ClearFeedback();
