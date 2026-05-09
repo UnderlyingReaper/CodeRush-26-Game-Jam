@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -8,6 +9,7 @@ using UnityEngine.Events;
 /// </summary>
 public enum LoopStage
 {
+    Cutscene,
     Loop1,
     Loop2,
     Loop3
@@ -25,6 +27,10 @@ public class LoopManager : MonoBehaviour
     // ── State ──────────────────────────────────────────────────────────────
     [Header("Current State (read-only in Inspector)")]
     [SerializeField] private LoopStage currentLoop = LoopStage.Loop1;
+
+    [Header("Loop 1")]
+    [SerializeField] private GameObject player;
+    [SerializeField] private GameObject coinObj;
 
     public LoopStage CurrentLoop => currentLoop;
 
@@ -60,7 +66,6 @@ public class LoopManager : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
     }
 
     private void Start()
@@ -69,6 +74,19 @@ public class LoopManager : MonoBehaviour
     }
 
     // ── Public API ─────────────────────────────────────────────────────────
+
+
+    public void StartGame()
+    {
+        player.SetActive(true);
+        SetLoop(LoopStage.Loop1);
+    }
+
+    public void StartCutscene()
+    {
+        player.SetActive(false);
+        SetLoop(LoopStage.Cutscene);
+    }
 
     /// <summary>
     /// Player boards the bus — advances Loop1 → Loop2 → Loop3.
@@ -126,6 +144,13 @@ public class LoopManager : MonoBehaviour
     public void RestartCurrentLoop()
     {
         Debug.Log($"[LoopManager] Restarting {currentLoop}");
+
+        if (currentLoop == LoopStage.Loop1)
+        {
+            coinObj.SetActive(true);
+        }
+
+        PlayerInventory.Instance.ResetForLoop();
         OnLoopRestarted?.Invoke(currentLoop);
     }
 

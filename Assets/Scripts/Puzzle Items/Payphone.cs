@@ -6,6 +6,7 @@ public class Payphone : MonoBehaviour, IInteractable
 {
     [Header("Interaction Strings")]
     [SerializeField] private string loop1Prompt = "Answer ringing phone";
+    [SerializeField] private string loop2RingingPrompt = "Answer ringing phone";
     [SerializeField] private string pickUpPrompt = "Pick up receiver";
     [SerializeField] private string hangUpPrompt = "Hang up receiver";
 
@@ -20,7 +21,10 @@ public class Payphone : MonoBehaviour, IInteractable
     [Header("Clips")]
     [SerializeField] private AudioClip loop1Static;
     [SerializeField] private AudioClip loop1NotInService;
+    [SerializeField] private AudioClip phoneRingClip;       // Ringing SFX for Loop 2 start
     [SerializeField] private AudioClip loop2Announcement;
+    [SerializeField] private AudioClip loop2RouteConfirmedClip;
+    [SerializeField] private AudioClip loop2RouteRejectedClip;
     [SerializeField] private AudioClip loop3DialTone;
     [SerializeField] private AudioClip hangUpClick;
     [SerializeField] private AudioClip wrongDigit1Clip;
@@ -28,21 +32,58 @@ public class Payphone : MonoBehaviour, IInteractable
     [SerializeField] private AudioClip wrongDigit3Clip;
     [SerializeField] private AudioClip shuttleConfirmedClip;
 
-    [SerializeField] string correctCode = "247";
-    private bool receiverUp = false;
-    private bool isBusy = false; // Internal flag for lock-out
-    private bool dialpadOpen = false;
+    [Header("Loop 2 Ring")]
+    [Tooltip("Seconds after Loop 2 starts before the phone begins ringing.")]
+    [SerializeField] private float loop2RingDelay = 2f;
 
-    // ─── IInteractable Implementation ──────────────────────────
+    [SerializeField] string correctCode = "247";
+
+    private bool receiverUp = false;
+    private bool isBusy = false;
+    private bool dialpadOpen = false;
+    private bool loop2DialMode = false;
+    private bool loop2IsRinging = false;
+
+    // ─── Lifecycle ────────────────────────────────────────────────
+
+    private void OnEnable()
+    {
+        LoopManager.OnLoopChanged += HandleLoopChanged;
+        LoopManager.OnLoopRestarted += HandleLoopRestarted;
+    }
+
+    private void OnDisable()
+    {
+        LoopManager.OnLoopChanged -= HandleLoopChanged;
+        LoopManager.OnLoopRestarted -= HandleLoopRestarted;
+    }
+
+    private void HandleLoopChanged(LoopStage stage)
+    {
+        if (stage == LoopStage.Loop2)
+            StartCoroutine(Loop2RingSequence());
+    }
+
+    private void HandleLoopRestarted(LoopStage stage)
+    {
+        if (stage == LoopStage.Loop2)
+        {
+            ResetLoopState();
+            StartCoroutine(Loop2RingSequence());
+        }
+    }
+
+    // ─── IInteractable ────────────────────────────────────────────
 
     public bool CanInteract => !isBusy;
 
     public string GetPromptText()
     {
         if (LoopManager.Instance.CurrentLoop == LoopStage.Loop1)
-        {
             return isBusy ? "" : loop1Prompt;
-        }
+
+        if (LoopManager.Instance.CurrentLoop == LoopStage.Loop2 && loop2IsRinging)
+            return loop2RingingPrompt;
 
         return receiverUp ? hangUpPrompt : pickUpPrompt;
     }
@@ -51,9 +92,7 @@ public class Payphone : MonoBehaviour, IInteractable
     {
         if (!CanInteract) return;
 
-        LoopStage currentLoop = LoopManager.Instance.CurrentLoop;
-
-        switch (currentLoop)
+        switch (LoopManager.Instance.CurrentLoop)
         {
             case LoopStage.Loop1:
                 StartCoroutine(Loop1Sequence());
@@ -68,54 +107,146 @@ public class Payphone : MonoBehaviour, IInteractable
         }
     }
 
-    // ─── Loop Sequences ──────────────────────────────────────────
+    // ─── Loop 2 Ring ──────────────────────────────────────────────
+
+    private IEnumerator Loop2RingSequence()
+    {
+        yield return new WaitForSeconds(loop2RingDelay);
+
+        // Start ringing — loops until player answers
+        loop2IsRinging = true;
+        audioSource.clip = phoneRingClip;
+        audioSource.volume = sfxVolume;
+        audioSource.loop = true;
+        audioSource.Play();
+    }
+
+    // ─── Loop Sequences ───────────────────────────────────────────
+
+    public void ResetLoopState()
+    {
+        StopAllCoroutines();
+        loop2DialMode = false;
+        loop2IsRinging = false;
+        receiverUp = false;
+        dialpadOpen = false;
+        isBusy = false;
+        audioSource.Stop();
+        audioSource.loop = false;
+    }
 
     private IEnumerator Loop1Sequence()
     {
-        isBusy = true; // Lock interaction
+        isBusy = true;
         receiverUp = true;
 
         PlayClip(loop1Static, sfxVolume);
         yield return new WaitForSeconds(2f);
 
-        PlayClip(loop1NotInService, voiceVolume); // "This line is not in service" [cite: 86]
+        PlayClip(loop1NotInService, voiceVolume);
         yield return new WaitForSeconds(loop1NotInService ? loop1NotInService.length : 3f);
 
         ForceHangUp();
-        isBusy = false; // Unlock
+        isBusy = false;
     }
 
     private void ToggleLoop2()
     {
-        if (!receiverUp)
+        if (loop2IsRinging)
         {
+            // Player answers the ringing phone
+            loop2IsRinging = false;
+            audioSource.Stop();
+            audioSource.loop = false;
+
             receiverUp = true;
-            audioSource.clip = loop2Announcement; // Automated transit announcement [cite: 86]
+            audioSource.clip = loop2Announcement;
             audioSource.volume = voiceVolume;
             audioSource.loop = true;
             audioSource.Play();
+            return;
         }
-        else
+
+        if (receiverUp && !loop2DialMode)
         {
+            // Hang up after hearing announcement — enters dial mode
             ForceHangUp();
+            loop2DialMode = true;
+            return;
+        }
+
+        if (loop2DialMode && !receiverUp)
+        {
+            // Second pickup — open dialpad
+            OpenLoop2Dialpad();
         }
     }
+
+    private void OpenLoop2Dialpad()
+    {
+        receiverUp = true;
+        PlayClip(loop3DialTone, dialToneVolume);
+
+        if (DialpadUI.Instance != null)
+            DialpadUI.Instance.OpenWithDigits(2, OnLoop2CodeSubmitted);
+    }
+
+    public void OnLoop2CodeSubmitted(string input)
+    {
+        isBusy = true;
+        audioSource.Stop();
+        audioSource.loop = false;
+
+        string correctRoute = ScheduleBoard.Instance.loop2TargetRoute.ToString();
+
+        if (input == correctRoute)
+            StartCoroutine(Loop2WinSequence());
+        else
+            StartCoroutine(Loop2WrongSequence());
+    }
+
+    private IEnumerator Loop2WinSequence()
+    {
+        PlayClip(loop2RouteConfirmedClip, voiceVolume); // "Route confirmed. Stand by."
+        yield return new WaitForSeconds(loop2RouteConfirmedClip ? loop2RouteConfirmedClip.length : 3f);
+
+        ForceHangUp();
+        isBusy = false;
+        loop2DialMode = false;
+
+        // Signal bus spawn — vending machine will dispense ticket via OnLoopPuzzleComplete
+        LoopManager.Instance.CompleteCurrentLoopPuzzle();
+    }
+
+    private IEnumerator Loop2WrongSequence()
+    {
+        PlayClip(loop2RouteRejectedClip, voiceVolume); // "Route service unavailable."
+        yield return new WaitForSeconds(loop2RouteRejectedClip ? loop2RouteRejectedClip.length : 3f);
+
+        ForceHangUp();
+        isBusy = false;
+        loop2DialMode = false;
+
+        LoopManager.Instance.RestartCurrentLoop();
+    }
+
+    // ─── Loop 3 ───────────────────────────────────────────────────
 
     private void OpenDialpad()
     {
         dialpadOpen = true;
         receiverUp = true;
         audioSource.loop = true;
-        PlayClip(loop3DialTone, dialToneVolume); // 
+        PlayClip(loop3DialTone, dialToneVolume);
 
         if (DialpadUI.Instance != null)
-            DialpadUI.Instance.Open(OnCodeSubmitted); // Opens UI and disables movement
+            DialpadUI.Instance.Open(OnCodeSubmitted);
     }
 
     private void CloseDialpad()
     {
         if (DialpadUI.Instance != null)
-            DialpadUI.Instance.Close(); // Closes UI and enables movement
+            DialpadUI.Instance.Close();
         ForceHangUp();
     }
 
@@ -128,11 +259,11 @@ public class Payphone : MonoBehaviour, IInteractable
         dialpadOpen = false;
     }
 
-    // ─── Code Logic ──────────────────────────────────────────────
+    // ─── Code Logic ───────────────────────────────────────────────
 
     public void OnCodeSubmitted(string input)
     {
-        isBusy = true; // Prevent player from hanging up mid-response
+        isBusy = true;
         audioSource.Stop();
         audioSource.loop = false;
 
@@ -146,7 +277,6 @@ public class Payphone : MonoBehaviour, IInteractable
     {
         AudioClip response = wrongDigit3Clip;
 
-        // GDD Informative Failure Logic [cite: 97]
         if (input.Length > 0 && input[0] != correctCode[0]) response = wrongDigit1Clip;
         else if (input.Length > 1 && input[1] != correctCode[1]) response = wrongDigit2Clip;
 
@@ -155,15 +285,16 @@ public class Payphone : MonoBehaviour, IInteractable
 
         ForceHangUp();
         isBusy = false;
-        LoopManager.Instance.RestartCurrentLoop(); // [cite: 99]
+        LoopManager.Instance.RestartCurrentLoop();
     }
 
     private IEnumerator WinSequence()
     {
-        PlayClip(shuttleConfirmedClip, voiceVolume); // "Your shuttle is two minutes away" [cite: 90]
+        PlayClip(shuttleConfirmedClip, voiceVolume);
         yield return new WaitForSeconds(shuttleConfirmedClip ? shuttleConfirmedClip.length : 3f);
 
-        LoopManager.Instance.TriggerRealBus(); // [cite: 91]
+        LoopManager.Instance.TriggerRealBus();
+        PlayerInventory.Instance.HasTicket = true;
     }
 
     private void PlayClip(AudioClip clip, float volume)
