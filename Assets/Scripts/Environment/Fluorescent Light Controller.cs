@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using DG.Tweening; // Required for DOTween
 
 public class FluorescentController : MonoBehaviour
 {
@@ -21,6 +22,9 @@ public class FluorescentController : MonoBehaviour
     [Tooltip("Speed of the noise sampling. Higher values create faster, more 'staccato' flickering.")]
     public float flickerSpeed = 15f;
 
+    [Tooltip("How long it takes to smoothly fade between the on and off states.")]
+    public float smoothDuration = 0.1f;
+
     [Header("Audio")]
     public AudioSource humSource;
     [Tooltip("The constant 60Hz hum volume when the light is fully 'On'.")]
@@ -41,6 +45,13 @@ public class FluorescentController : MonoBehaviour
     private void OnDisable()
     {
         LoopManager.OnLoopChanged -= HandleLoopChanged;
+
+        // Safety: Kill tweens when disabled to prevent errors if the object is destroyed
+        foreach (Light l in childLights)
+        {
+            if (l != null) l.DOKill();
+        }
+        if (humSource != null) humSource.DOKill();
     }
 
     private void Update()
@@ -61,26 +72,30 @@ public class FluorescentController : MonoBehaviour
 
     private void UpdateSystemState(bool state)
     {
-        // 1. Swap Materials for physical bulb feedback
+        // 1. Swap Materials for physical bulb feedback 
+        // (Note: Material swaps are instant. If you want smooth material transitions later, 
+        // you would need to tween the Emission Color property of a single Material instance).
         Material targetMat = state ? litMaterial : offMaterial;
         foreach (MeshRenderer renderer in bulbRenderers)
         {
             renderer.sharedMaterial = targetMat;
         }
 
-        // 2. Toggle Light Sources
-        float intensity = state ? 1.0f : 0.0f;
+        // 2. Smoothly Toggle Light Sources using DOTween
+        float targetIntensity = state ? 1.0f : 0.0f;
         foreach (Light l in childLights)
         {
-            l.intensity = intensity;
+            // Always kill the active tween on this object before starting a new one
+            l.DOKill();
+            l.DOIntensity(targetIntensity, smoothDuration).SetEase(Ease.InOutSine);
         }
 
-        // 3. Sync Audio Hum with proportional volume dip
+        // 3. Smoothly Sync Audio Hum with proportional volume dip
         if (humSource != null)
         {
-            // Dimming the audio to 20% of base when flickering off 
-            // simulates the power drop without cutting audio completely.
-            humSource.volume = state ? baseVolume : baseVolume * 0.2f;
+            humSource.DOKill();
+            float targetVolume = state ? baseVolume : baseVolume * 0.2f;
+            humSource.DOFade(targetVolume, smoothDuration).SetEase(Ease.InOutSine);
         }
     }
 

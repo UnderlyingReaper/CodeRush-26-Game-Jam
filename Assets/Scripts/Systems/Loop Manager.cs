@@ -37,13 +37,19 @@ public class LoopManager : MonoBehaviour
     [SerializeField] private GameObject coinObj;
     [SerializeField] private PlayableDirector _director;
 
-    [Header("Loop 3 Timeout Dialogue")]
-    [Tooltip("How many seconds until the dialogue plays in Loop 3 if the real bus hasn't arrived?")]
-    [SerializeField] private float loop3TimeoutDuration = 60f;
-    [TextArea]
-    [SerializeField] private string loop3TimeoutDialogue = "It's taking a while... Did I miss it?";
+    [Header("Loop 1 Hint")]
+    [SerializeField] private float loop1Timeout = 60f;
+    [SerializeField] private DialogueLine loop1Hint;
 
-    private Coroutine _loop3TimerCoroutine;
+    [Header("Loop 2 Hint")]
+    [SerializeField] private float loop2Timeout = 60f;
+    [SerializeField] private DialogueLine loop2Hint;
+
+    [Header("Loop 3 Hint")]
+    [SerializeField] private float loop3Timeout = 60f;
+    [SerializeField] private DialogueLine loop3Hint;
+
+    private Coroutine _hintTimerCoroutine;
 
     public LoopStage CurrentLoop => currentLoop;
 
@@ -144,6 +150,9 @@ public class LoopManager : MonoBehaviour
     {
         Debug.Log($"[LoopManager] Puzzle complete for {currentLoop} — spawning bus.");
         OnLoopPuzzleComplete?.Invoke(currentLoop);
+
+        // Puzzle solved, cancel the hint timer so it doesn't interrupt success
+        StopHintTimer();
     }
 
     /// <summary>
@@ -159,7 +168,7 @@ public class LoopManager : MonoBehaviour
         }
 
         // The player succeeded! Cancel the timeout dialogue so it doesn't play over the escape.
-        StopLoop3Timer();
+        StopHintTimer();
 
         Debug.Log("[LoopManager] Real bus arrived — escape triggered.");
         OnRealBusArrived?.Invoke();
@@ -211,41 +220,52 @@ public class LoopManager : MonoBehaviour
         OnLoopChanged?.Invoke(currentLoop);
     }
 
-    // ── Loop 3 Timer Logic ─────────────────────────────────────────────────
+    // ── Hint Timer Logic ───────────────────────────────────────────────────
 
     private void HandleLoopStateUpdate(LoopStage stage)
     {
-        StopLoop3Timer();
+        StopHintTimer();
 
-        // If we just entered (or restarted) Loop 3, start the 60-second countdown
-        if (stage == LoopStage.Loop3)
+        float activeTimeout = 0f;
+        DialogueLine activeLine = null;
+
+        // Fetch the corresponding settings for the current loop
+        switch (stage)
         {
-            _loop3TimerCoroutine = StartCoroutine(Loop3TimeoutRoutine());
+            case LoopStage.Loop1:
+                activeTimeout = loop1Timeout;
+                activeLine = loop1Hint;
+                break;
+            case LoopStage.Loop2:
+                activeTimeout = loop2Timeout;
+                activeLine = loop2Hint;
+                break;
+            case LoopStage.Loop3:
+                activeTimeout = loop3Timeout;
+                activeLine = loop3Hint;
+                break;
+        }
+
+        // Start timer if applicable, duration is valid, and a hint line actually exists
+        if (activeTimeout > 0 && activeLine != null)
+        {
+            _hintTimerCoroutine = StartCoroutine(HintTimeoutRoutine(activeTimeout, activeLine));
         }
     }
 
-    private void StopLoop3Timer()
+    private void StopHintTimer()
     {
-        if (_loop3TimerCoroutine != null)
+        if (_hintTimerCoroutine != null)
         {
-            StopCoroutine(_loop3TimerCoroutine);
-            _loop3TimerCoroutine = null;
+            StopCoroutine(_hintTimerCoroutine);
+            _hintTimerCoroutine = null;
         }
     }
 
-    private IEnumerator Loop3TimeoutRoutine()
+    private IEnumerator HintTimeoutRoutine(float timeout, DialogueLine line)
     {
-        yield return new WaitForSeconds(loop3TimeoutDuration);
-
-        // Time is up! Check if DialogueManager exists and show the text
-        if (DialogueManager.Instance != null)
-        {
-            DialogueManager.Instance.Show(loop3TimeoutDialogue);
-        }
-        else
-        {
-            Debug.LogWarning("LoopManager: Tried to show Loop 3 timeout text, but DialogueManager.Instance is null.");
-        }
+        yield return new WaitForSeconds(timeout);
+        DialogueManager.Instance.Show(line);
     }
 
     // ── Context Menus ──────────────────────────────────────────────────────

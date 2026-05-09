@@ -49,8 +49,12 @@ MonoBehaviour:
   player: {fileID: 0}
   coinObj: {fileID: 0}
   _director: {fileID: 0}
-  loop3TimeoutDuration: 60
-  loop3TimeoutDialogue: Maybe I should look around.
+  loop1Timeout: 45
+  loop1Hint: {fileID: 11400000, guid: 136e783b6823f70418189022a871976d, type: 2}
+  loop2Timeout: 60
+  loop2Hint: {fileID: 11400000, guid: 56c7337bb4949004d9ab4877e55d8e95, type: 2}
+  loop3Timeout: 60
+  loop3Hint: {fileID: 11400000, guid: 82bc98662213f394ba5b41a84685db89, type: 2}
 --- !u!114 &6000419556965753457
 MonoBehaviour:
   m_ObjectHideFlags: 0
