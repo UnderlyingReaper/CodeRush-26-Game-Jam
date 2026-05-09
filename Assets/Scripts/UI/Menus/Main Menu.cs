@@ -22,6 +22,9 @@ public class MainMenu : MonoBehaviour
     private void Start()
     {
         ShowMain();
+        InputManager.Instance.DisableGameplay();
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
 
         // Ensure text starts invisible
         if (contextText != null)

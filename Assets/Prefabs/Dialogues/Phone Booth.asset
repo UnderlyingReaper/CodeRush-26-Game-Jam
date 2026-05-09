@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff3d7f7b29c361545bd7be5c3a025daa, type: 3}
   m_Name: Phone Booth
   m_EditorClassIdentifier: Assembly-CSharp::DialogueLine
-  text: "[PHONE]  Route 14 to Ashford Central. Arriving in\u2026 shortly. Please
-    have your fare ready."
+  text: "[PHONE]  Bus to Ashford. Arriving in\u2026 shortly. Please have your fare
+    ready."
   displayDuration: 5
