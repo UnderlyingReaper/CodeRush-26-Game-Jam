@@ -167,6 +167,7 @@ public class ClockController : MonoBehaviour
     {
         return loop switch
         {
+            LoopStage.Cutscene => -30f, // 11PM
             LoopStage.Loop1 => 30f,   // 1 AM
             LoopStage.Loop2 => 60f,   // 2 AM
             LoopStage.Loop3 => 90f,   // 3 AM
