@@ -608,14 +608,6 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 216418074}
-    - target: {fileID: 6875524630035661171, guid: e356576588a89274fb69e10ac6a1463c, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: OnBackClicked
-      objectReference: {fileID: 0}
-    - target: {fileID: 6875524630035661171, guid: e356576588a89274fb69e10ac6a1463c, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: MainMenu, Assembly-CSharp
-      objectReference: {fileID: 0}
     - target: {fileID: 8618516931767774679, guid: e356576588a89274fb69e10ac6a1463c, type: 3}
       propertyPath: m_Name
       value: Controls Panel
