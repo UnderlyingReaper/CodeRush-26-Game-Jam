@@ -1863,7 +1863,7 @@ MonoBehaviour:
   wrongDigit3Clip: {fileID: 8300000, guid: a21f264bbaf53854483c76398f75dd7e, type: 3}
   shuttleConfirmedClip: {fileID: 8300000, guid: cf64166e634efe440bb1c97f9cd4f492, type: 3}
   loop2RingDelay: 3
-  correctCode: 751
+  correctCode: 750
 --- !u!65 &2907183906024709403
 BoxCollider:
   m_ObjectHideFlags: 0
