@@ -1,6 +1,10 @@
 using System;
+using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Playables;
+using UnityEngine.SceneManagement;
+using System.Collections; // Needed for Coroutines
 
 /// <summary>
 /// Which loop the player is currently in.
@@ -31,6 +35,15 @@ public class LoopManager : MonoBehaviour
     [Header("Loop 1")]
     [SerializeField] private GameObject player;
     [SerializeField] private GameObject coinObj;
+    [SerializeField] private PlayableDirector _director;
+
+    [Header("Loop 3 Timeout Dialogue")]
+    [Tooltip("How many seconds until the dialogue plays in Loop 3 if the real bus hasn't arrived?")]
+    [SerializeField] private float loop3TimeoutDuration = 60f;
+    [TextArea]
+    [SerializeField] private string loop3TimeoutDialogue = "It's taking a while... Did I miss it?";
+
+    private Coroutine _loop3TimerCoroutine;
 
     public LoopStage CurrentLoop => currentLoop;
 
@@ -49,7 +62,6 @@ public class LoopManager : MonoBehaviour
     /// </summary>
     public static event UnityAction<LoopStage> OnLoopRestarted;
 
-    // Add this event at the top with your other events
     /// <summary>
     /// Fired when the current loop's puzzle is solved and the bus should spawn.
     /// </summary>
@@ -68,13 +80,25 @@ public class LoopManager : MonoBehaviour
         Instance = this;
     }
 
+    private void OnEnable()
+    {
+        // Listen to our own events to handle the timeout timer cleanly
+        OnLoopChanged += HandleLoopStateUpdate;
+        OnLoopRestarted += HandleLoopStateUpdate;
+    }
+
+    private void OnDisable()
+    {
+        OnLoopChanged -= HandleLoopStateUpdate;
+        OnLoopRestarted -= HandleLoopStateUpdate;
+    }
+
     private void Start()
     {
         OnLoopChanged?.Invoke(currentLoop);
     }
 
     // ── Public API ─────────────────────────────────────────────────────────
-
 
     public void StartGame()
     {
@@ -134,8 +158,33 @@ public class LoopManager : MonoBehaviour
             return;
         }
 
+        // The player succeeded! Cancel the timeout dialogue so it doesn't play over the escape.
+        StopLoop3Timer();
+
         Debug.Log("[LoopManager] Real bus arrived — escape triggered.");
         OnRealBusArrived?.Invoke();
+    }
+
+    public void PLayEndCutscene()
+    {
+        if (Camera.main != null)
+        {
+            var brain = Camera.main.GetComponent<CinemachineBrain>();
+            if (brain != null)
+            {
+                // Force the transition to be an instant 0-second Cut
+                brain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.Cut, 0f);
+            }
+        }
+
+        player.SetActive(false);
+        _director.gameObject.SetActive(true);
+        _director.Play();
+    }
+
+    public void LoadMainMenu()
+    {
+        SceneManager.LoadScene(0);
     }
 
     /// <summary>
@@ -162,6 +211,44 @@ public class LoopManager : MonoBehaviour
         OnLoopChanged?.Invoke(currentLoop);
     }
 
+    // ── Loop 3 Timer Logic ─────────────────────────────────────────────────
+
+    private void HandleLoopStateUpdate(LoopStage stage)
+    {
+        StopLoop3Timer();
+
+        // If we just entered (or restarted) Loop 3, start the 60-second countdown
+        if (stage == LoopStage.Loop3)
+        {
+            _loop3TimerCoroutine = StartCoroutine(Loop3TimeoutRoutine());
+        }
+    }
+
+    private void StopLoop3Timer()
+    {
+        if (_loop3TimerCoroutine != null)
+        {
+            StopCoroutine(_loop3TimerCoroutine);
+            _loop3TimerCoroutine = null;
+        }
+    }
+
+    private IEnumerator Loop3TimeoutRoutine()
+    {
+        yield return new WaitForSeconds(loop3TimeoutDuration);
+
+        // Time is up! Check if DialogueManager exists and show the text
+        if (DialogueManager.Instance != null)
+        {
+            DialogueManager.Instance.Show(loop3TimeoutDialogue);
+        }
+        else
+        {
+            Debug.LogWarning("LoopManager: Tried to show Loop 3 timeout text, but DialogueManager.Instance is null.");
+        }
+    }
+
+    // ── Context Menus ──────────────────────────────────────────────────────
     [ContextMenu("Debug: Force Loop 1")] private void ForceLoop1() => SetLoop(LoopStage.Loop1);
     [ContextMenu("Debug: Force Loop 2")] private void ForceLoop2() => SetLoop(LoopStage.Loop2);
     [ContextMenu("Debug: Force Loop 3")] private void ForceLoop3() => SetLoop(LoopStage.Loop3);

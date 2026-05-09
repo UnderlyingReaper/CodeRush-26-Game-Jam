@@ -317,7 +317,7 @@ public class BusController : MonoBehaviour
         seq.OnComplete(() => onComplete?.Invoke());
     }
 
-    private void CloseDoors(System.Action onComplete = null)
+    public void CloseDoors(System.Action onComplete = null)
     {
         if (leftDoor == null || rightDoor == null) { onComplete?.Invoke(); return; }
 

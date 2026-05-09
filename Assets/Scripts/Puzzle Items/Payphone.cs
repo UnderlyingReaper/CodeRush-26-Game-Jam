@@ -13,6 +13,9 @@ public class Payphone : MonoBehaviour, IInteractable
     [Header("Audio Source")]
     [SerializeField] private AudioSource audioSource;
 
+    [Header("Dialogue")]
+    [SerializeField] private DialogueLine loop2AnnouncementDialogue;
+
     [Header("Volumes")]
     [Range(0f, 1f)][SerializeField] private float sfxVolume = 0.8f;
     [Range(0f, 1f)][SerializeField] private float voiceVolume = 1.0f;
@@ -164,6 +167,9 @@ public class Payphone : MonoBehaviour, IInteractable
             audioSource.volume = voiceVolume;
             audioSource.loop = true;
             audioSource.Play();
+
+            if (loop2AnnouncementDialogue != null)
+                DialogueManager.Instance.Show(loop2AnnouncementDialogue);
             return;
         }
 

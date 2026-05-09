@@ -1,5 +1,4 @@
-﻿// BusDoor.cs
-using System.Collections;
+﻿using System.Collections;
 using Unity.Cinemachine;
 using UnityEngine;
 
@@ -15,10 +14,15 @@ public class BusDoor : MonoBehaviour, IInteractable
     [Tooltip("How long the doors stay open (and screen is visible) at the fake destination.")]
     public float doorsOpenDwellTime = 1.2f;
 
+    [Header("Loop Start Dialogue")]
+    public float dialogueDelay = 2.0f;
+    [TextArea] public string loop2Text = "I'm back where I started...";
+    [TextArea] public string loop3Text = "Not this place again...";
+
     public bool CanInteract => true;
 
     public string GetPromptText() => PlayerInventory.Instance.HasTicket
-        ? "Board Bus [E]"
+        ? "Board Bus"
         : "You need a ticket";
 
     public void Interact()
@@ -36,7 +40,7 @@ public class BusDoor : MonoBehaviour, IInteractable
 
     private IEnumerator BoardingSequence()
     {
-        // Wait for doors to finish opening, then cut input
+        // 1. Wait for doors to finish opening, then cut input
         yield return new WaitForSeconds(BusController.Instance.doorAnimDuration);
         InputManager.Instance.DisableGameplay();
 
@@ -46,9 +50,36 @@ public class BusDoor : MonoBehaviour, IInteractable
         ScreenFade.Instance.FadeOut(() => fadeDone = true);
         yield return new WaitUntil(() => fadeDone);
 
-        // ── Black screen: fake travel soundscape ──────────────────────────
+        // ──────────────────────────────────────────────────────────────────
+        // ENDING ESCAPE (LOOP 3)
+        // ──────────────────────────────────────────────────────────────────
+        if (LoopManager.Instance.IsLoop3)
+        {
+            // 1. Close the bus doors
+            BusController.Instance.CloseDoors();
+            yield return new WaitForSeconds(BusController.Instance.doorAnimDuration);
 
-        bool isEscape = LoopManager.Instance.IsLoop3;
+            // 2. Tell the bus to physically drive away
+            BusController.Instance.Depart();
+
+            // 3. Disable the bus cam so your cutscene camera takes over
+            BusController.Instance.cam1.gameObject.SetActive(false);
+
+            // 4. Trigger the cutscene
+            LoopManager.Instance.PLayEndCutscene();
+
+            // 5. Unfade the screen so the player can watch the cutscene
+            bool fadeInDone = false;
+            ScreenFade.Instance.FadeIn(() => fadeInDone = true);
+            yield return new WaitUntil(() => fadeInDone);
+
+            // Stop the coroutine here. The PlayableDirector handles the rest of the game.
+            yield break;
+        }
+
+        // ──────────────────────────────────────────────────────────────────
+        // NORMAL LOOP BOARDING (LOOP 1 & 2)
+        // ──────────────────────────────────────────────────────────────────
 
         // PlayTravelSequence fires onDoorsOpen the moment the fake doors open,
         // which is our cue to fade back in mid-sequence.
@@ -67,9 +98,9 @@ public class BusDoor : MonoBehaviour, IInteractable
         TeleportPlayerToExit();
 
         // Fade back in — player sees the bus stop through the open doors
-        bool fadeInDone = false;
-        ScreenFade.Instance.FadeIn(() => fadeInDone = true);
-        yield return new WaitUntil(() => fadeInDone);
+        bool dwellFadeInDone = false;
+        ScreenFade.Instance.FadeIn(() => dwellFadeInDone = true);
+        yield return new WaitUntil(() => dwellFadeInDone);
 
         // Re-enable input so player can look around during the dwell
         InputManager.Instance.EnableGameplay();
@@ -83,22 +114,37 @@ public class BusDoor : MonoBehaviour, IInteractable
         ScreenFade.Instance.FadeOut(() => fadeDone = true);
         yield return new WaitUntil(() => fadeDone);
 
-        // ── Advance loop state ────────────────────────────────────────────
+        // Close the physical doors and wait for the animation
+        BusController.Instance.CloseDoors();
+        yield return new WaitForSeconds(BusController.Instance.doorAnimDuration);
 
+        // Advance loop state
         LoopManager.Instance.AdvanceLoop();
 
-        if (isEscape)
-        {
-            UnityEngine.SceneManagement.SceneManager.LoadScene("Credits");
-            yield break;
-        }
-
-        // Bus departs, then fade back in to normal gameplay
+        // Bus departs physically
         BusController.Instance.Depart();
 
-        bool fadeBackDone = false;
-        ScreenFade.Instance.FadeIn(() => fadeBackDone = true);
-        yield return new WaitUntil(() => fadeBackDone);
+        // Fade back in to normal gameplay
+        bool finalFadeInDone = false;
+        ScreenFade.Instance.FadeIn(() => finalFadeInDone = true);
+        yield return new WaitUntil(() => finalFadeInDone);
+
+        // Trigger delayed dialogue
+        StartCoroutine(PlayDelayedDialogue());
+    }
+
+    private IEnumerator PlayDelayedDialogue()
+    {
+        yield return new WaitForSeconds(dialogueDelay);
+
+        if (LoopManager.Instance.IsLoop2)
+        {
+            DialogueManager.Instance.Show(loop2Text);
+        }
+        else if (LoopManager.Instance.IsLoop3)
+        {
+            DialogueManager.Instance.Show(loop3Text);
+        }
     }
 
     private void TeleportPlayerToExit()

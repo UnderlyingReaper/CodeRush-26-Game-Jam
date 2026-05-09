@@ -48,6 +48,9 @@ MonoBehaviour:
   currentLoop: 0
   player: {fileID: 0}
   coinObj: {fileID: 0}
+  _director: {fileID: 0}
+  loop3TimeoutDuration: 60
+  loop3TimeoutDialogue: Maybe I should look around.
 --- !u!114 &6000419556965753457
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -64,6 +67,7 @@ MonoBehaviour:
     m_Signals:
     - {fileID: 11400000, guid: 83a0753e8c984c74eb4fb599f0892372, type: 2}
     - {fileID: 11400000, guid: 6d8248397f243a8429ecf958b5ee34fb, type: 2}
+    - {fileID: 11400000, guid: 190f0ab023a32c64c80fc8bc81239d26, type: 2}
     m_Events:
     - m_PersistentCalls:
         m_Calls:
@@ -84,6 +88,20 @@ MonoBehaviour:
         - m_Target: {fileID: 1549310740413729868}
           m_TargetAssemblyTypeName: LoopManager, Assembly-CSharp
           m_MethodName: StartGame
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+    - m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1549310740413729868}
+          m_TargetAssemblyTypeName: LoopManager, Assembly-CSharp
+          m_MethodName: LoadMainMenu
           m_Mode: 1
           m_Arguments:
             m_ObjectArgument: {fileID: 0}

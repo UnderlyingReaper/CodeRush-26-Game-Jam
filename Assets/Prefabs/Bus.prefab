@@ -743,7 +743,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BusDoor
   delayBeforeDepart: 0.4
-  journeyDuration: 8
+  journeyDuration: 6
   doorsOpenDwellTime: 1.2
 --- !u!1 &7064742432213404954
 GameObject:
